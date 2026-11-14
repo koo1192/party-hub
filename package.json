@@ -1,10 +1,13 @@
 {
-  "name": "kakera-quiz",
-  "version": "0.1.0",
+  "name": "party-hub",
+  "version": "0.2.0",
   "private": true,
-  "description": "スマホで遊ぶ協力型パーティークイズ（2〜6人）",
+  "description": "スマホで遊ぶパーティーゲームの箱（ゲームはプラグインで追加）",
   "type": "module",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node --env-file-if-exists=.env server.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.3.0"
   }
 }

@@ -1,17 +1,17 @@
-// 通信層。Supabase Realtime の broadcast を使う。
+// 通信層。部屋ごとのチャンネルに Supabase Realtime の broadcast でつなぐ。
 // 設定が空なら BroadcastChannel（同じブラウザ内のタブ同士だけ）で代用する。
 
-const SUPABASE_ESM = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+const SUPABASE_ESM = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm';
 
 export function isOnlineConfigured() {
-  const c = window.KAKERA_CONFIG || {};
+  const c = window.HUB_CONFIG || {};
   return Boolean(c.supabaseUrl && c.supabaseAnonKey);
 }
 
 let clientPromise = null;
 async function getClient() {
   if (!clientPromise) {
-    const c = window.KAKERA_CONFIG;
+    const c = window.HUB_CONFIG;
     clientPromise = import(SUPABASE_ESM).then(({ createClient }) =>
       createClient(c.supabaseUrl, c.supabaseAnonKey, {
         realtime: { params: { eventsPerSecond: 20 } },
@@ -26,7 +26,7 @@ async function getClient() {
  * @returns {Promise<{mode: 'online'|'local', send: (msg:any)=>void, close: ()=>void}>}
  */
 export async function connect(room, onMessage) {
-  const name = `kakera-${room}`;
+  const name = `hub-${room}`;
   if (isOnlineConfigured()) {
     const sb = await getClient();
     const ch = sb.channel(name, { config: { broadcast: { self: false } } });
