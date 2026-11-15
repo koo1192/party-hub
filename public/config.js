@@ -5,4 +5,8 @@
 window.HUB_CONFIG = {
   supabaseUrl: 'https://rihfgxrazltrtejlceau.supabase.co',
   supabaseAnonKey: 'sb_publishable_LJts15c6oTFRTthNBR78RA_sQn_1P9g',
+
+  // かけらクイズでAIに問題を作らせるか。false なら questions.txt の問題だけを使う（無料）。
+  // true にするには Claude の APIキーと Edge Function の設定が必要（README の「AI出題を設定する」）。
+  aiQuestions: false,
 };

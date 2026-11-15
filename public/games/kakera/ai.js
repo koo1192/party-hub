@@ -85,8 +85,10 @@ function fromBuiltin(genre, avoid) {
  * 問題を1つ用意する。
  * @returns {Promise<{genre, answer, aliases, hints, source: 'ai'|'builtin'}>}
  */
+export const aiEnabled = () => Boolean((window.HUB_CONFIG || {}).aiQuestions);
+
 export async function makeQuestion(genre, avoid = []) {
-  const ai = await fromAI(genre, avoid.slice(-30));
+  const ai = aiEnabled() ? await fromAI(genre, avoid.slice(-30)) : null;
   if (ai) return { ...ai, genre: ai.genre || genre, source: 'ai' };
   return { ...fromBuiltin(genre, avoid), source: 'builtin' };
 }

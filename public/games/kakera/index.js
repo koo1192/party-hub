@@ -5,8 +5,8 @@
 // ===========================================================
 import { esc, chip, shuffle } from '../../hub/util.js';
 import { normalize, isCorrect } from './judge.js';
-import { makeQuestion } from './ai.js';
-import { BUILTIN_GENRES } from './builtin.js';
+import { makeQuestion, aiEnabled } from './ai.js';
+import { BUILTIN_GENRES, BUILTIN_ERRORS } from './builtin.js';
 
 const GENRES = ['おまかせ', ...BUILTIN_GENRES];
 const TIMES = [30, 60, 90, 120, 0]; // 0 は無制限
@@ -241,8 +241,13 @@ export default {
             <div class="pills">${GENRES.map(
               (g) => `<button class="pill ${!s.custom && s.genre === g ? 'on' : ''}" data-kk="genre" data-v="${esc(g)}">${esc(g)}</button>`,
             ).join('')}</div>
-            <label for="kk-custom">好きなジャンルを書く（AIが使えるとき）</label>
-            <input id="kk-custom" maxlength="20" placeholder="例：ポケモン、文房具、80年代の歌" value="${esc(s.custom)}" />
+            ${
+              aiEnabled()
+                ? `<label for="kk-custom">好きなジャンルを書く（AIが問題を作ります）</label>
+                   <input id="kk-custom" maxlength="20" placeholder="例：ポケモン、文房具、80年代の歌" value="${esc(s.custom)}" />`
+                : ''
+            }
+            ${BUILTIN_ERRORS.length ? `<div class="banner err">問題ファイルの読み込みで問題があります: ${esc(BUILTIN_ERRORS[0])}</div>` : ''}
           </div>
           <div class="card">
             <h2>制限時間</h2>
@@ -318,7 +323,7 @@ export default {
                 })
                 .join('')}
             </ul>
-            ${v.q.source === 'builtin' ? '<p class="muted">※ 組み込みの問題です（AIにつながらなかったため）</p>' : ''}
+            ${v.q.source === 'builtin' && aiEnabled() ? '<p class="muted">※ 組み込みの問題です（AIにつながらなかったため）</p>' : ''}
           </div>
           ${
             ctx.isHost

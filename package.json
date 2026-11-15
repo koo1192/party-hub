@@ -5,7 +5,8 @@
   "description": "スマホで遊ぶパーティーゲームの箱（ゲームはプラグインで追加）",
   "type": "module",
   "scripts": {
-    "start": "node --env-file-if-exists=.env server.mjs"
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "check": "node scripts/check-questions.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.3.0"
