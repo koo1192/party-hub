@@ -8,7 +8,7 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const app = document.getElementById('app');
 const params = new URLSearchParams(location.search);
 
-const myId = store.get('sessionStorage', 'hub_id') || Math.random().toString(36).slice(2, 10);
+let myId = store.get('sessionStorage', 'hub_id') || Math.random().toString(36).slice(2, 10);
 store.set('sessionStorage', 'hub_id', myId);
 
 /** 読み込めたゲーム（id → プラグイン） */
@@ -414,7 +414,13 @@ window.addEventListener('pagehide', () => {
     Object.assign(ui, { screen: 'connecting', info: '部屋に戻っています…' });
     render();
     try {
-      await becomeHost(code, JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      // この端末に保存されていた部屋なので、そのときのホストIDを使う
+      if (parsed.hostId && parsed.hostId !== myId) {
+        myId = parsed.hostId;
+        store.set('sessionStorage', 'hub_id', myId);
+      }
+      await becomeHost(code, parsed);
     } catch (e) {
       fail(e);
     }

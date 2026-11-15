@@ -219,3 +219,4 @@ textarea { font: inherit; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 .stars { color: #e9a213; letter-spacing: 0.05em; }
+.chain { font-size: 17px; }

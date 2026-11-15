@@ -22,6 +22,11 @@ for (const q of questions) {
   for (const h of q.hints) {
     if (names.some((nm) => normalize(h).includes(nm))) warnings.push(`${where}: ヒント「${h}」に答えが入っています`);
   }
+  // 漢字の答えには、ひらがな（かカタカナ）の読みが別解に必要。自動では漢字を読めないため
+  const isKana = (s) => /^[ぁ-ゟ゠-ヿー\s・]+$/.test(s);
+  if (/[㐀-鿿]/.test(q.answer) && ![q.answer, ...q.aliases].some(isKana)) {
+    problems.push(`${where}: 漢字の答えには、ひらがなの読みを別解に書いてください（例：${q.answer} / よみかた）`);
+  }
   if (!q.hasLevel) warnings.push(`${where}: 難易度（行末の★）がないので★★として扱います`);
   if (new Set(q.hints.map(normalize)).size !== q.hints.length) warnings.push(`${where}: 同じヒントが2回あります`);
 }
