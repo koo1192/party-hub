@@ -3,7 +3,7 @@
 // 書き方:
 //   # で始まる行はメモ（無視される）
 //   ## ジャンル名          … ここから下はこのジャンルの問題
-//   答え / 別解 / 別解      … 問題の1行目。別解はなくてもよい
+//   答え / 別解 / 別解 ★★  … 問題の1行目。別解はなくてもよい。行末の★の数が難易度（1〜3、なければ2）
 //   - ヒント               … 6個以上。多いときは毎回ランダムに選ばれる
 //   （空行で次の問題）
 
@@ -40,8 +40,12 @@ export function parseQuestions(text) {
       errors.push(`${n}行目: 「${line}」は前の問題の続きになっています。ヒントなら先頭に「- 」をつけ、新しい問題なら前に空行を入れてください`);
       return;
     }
-    const parts = line.split(/[\/／]/).map((s) => s.trim()).filter(Boolean);
-    cur = { genre, answer: parts[0], aliases: parts.slice(1), hints: [], line: n };
+    // 行末の ★ の数が難易度（1〜3）。なければ 2
+    const star = line.match(/\s*([★☆*＊]{1,3})\s*$/);
+    const level = star ? star[1].replace(/[☆]/g, '').length || 2 : 2;
+    const body = star ? line.slice(0, star.index) : line;
+    const parts = body.split(/[\/／]/).map((s) => s.trim()).filter(Boolean);
+    cur = { genre, answer: parts[0], aliases: parts.slice(1), hints: [], level: Math.min(3, Math.max(1, level)), hasLevel: Boolean(star), line: n };
     questions.push(cur);
   });
   return { questions, errors };

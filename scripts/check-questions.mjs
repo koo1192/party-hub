@@ -22,13 +22,17 @@ for (const q of questions) {
   for (const h of q.hints) {
     if (names.some((nm) => normalize(h).includes(nm))) warnings.push(`${where}: ヒント「${h}」に答えが入っています`);
   }
+  if (!q.hasLevel) warnings.push(`${where}: 難易度（行末の★）がないので★★として扱います`);
   if (new Set(q.hints.map(normalize)).size !== q.hints.length) warnings.push(`${where}: 同じヒントが2回あります`);
 }
 
 const byGenre = {};
 for (const q of questions) byGenre[q.genre] = (byGenre[q.genre] || 0) + 1;
 console.log(`問題数: ${questions.length}問`);
-for (const [g, n] of Object.entries(byGenre)) console.log(`  ${g}: ${n}問`);
+for (const [g, n] of Object.entries(byGenre)) {
+  const lv = [1, 2, 3].map((l) => questions.filter((q) => q.genre === g && q.level === l).length);
+  console.log(`  ${g}: ${n}問（★${lv[0]} ★★${lv[1]} ★★★${lv[2]}）`);
+}
 for (const w of warnings) console.log(`注意: ${w}`);
 for (const p of problems) console.log(`エラー: ${p}`);
 if (problems.length) {

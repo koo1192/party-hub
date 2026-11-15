@@ -72,10 +72,18 @@ async function fromAI(genre, avoid) {
   return null;
 }
 
-function fromBuiltin(genre, avoid) {
+/** level: 0 ならどの難易度からも、1〜3 ならその難易度から選ぶ（なければ近いものへ） */
+function fromBuiltin(genre, avoid, level = 0) {
   const avoidSet = new Set(avoid.map(normalize));
   let pool = BUILTIN.filter((q) => q.genre === genre);
   if (!pool.length) pool = BUILTIN;
+  if (level) {
+    const unseen = (list) => list.filter((q) => q.level === level && !avoidSet.has(normalize(q.answer)));
+    // そのジャンルの同じ難易度 → 出しきったら全ジャンルの同じ難易度 → それもなければ同じ難易度をくり返す
+    const candidates = unseen(pool).length ? unseen(pool) : unseen(BUILTIN);
+    const sameLevel = pool.filter((q) => q.level === level);
+    pool = candidates.length ? candidates : sameLevel.length ? sameLevel : pool;
+  }
   const fresh = pool.filter((q) => !avoidSet.has(normalize(q.answer)));
   const pick = shuffle(fresh.length ? fresh : pool)[0];
   return { ...pick, aliases: [...pick.aliases], hints: [...pick.hints] };
@@ -87,8 +95,8 @@ function fromBuiltin(genre, avoid) {
  */
 export const aiEnabled = () => Boolean((window.HUB_CONFIG || {}).aiQuestions);
 
-export async function makeQuestion(genre, avoid = []) {
+export async function makeQuestion(genre, avoid = [], level = 0) {
   const ai = aiEnabled() ? await fromAI(genre, avoid.slice(-30)) : null;
-  if (ai) return { ...ai, genre: ai.genre || genre, source: 'ai' };
-  return { ...fromBuiltin(genre, avoid), source: 'builtin' };
+  if (ai) return { ...ai, genre: ai.genre || genre, level: 0, source: 'ai' };
+  return { ...fromBuiltin(genre, avoid, level), source: 'builtin' };
 }

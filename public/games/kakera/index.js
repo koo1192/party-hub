@@ -10,6 +10,8 @@ import { BUILTIN_GENRES, BUILTIN_ERRORS } from './builtin.js';
 
 const GENRES = ['おまかせ', ...BUILTIN_GENRES];
 const TIMES = [30, 60, 90, 120, 0]; // 0 は無制限
+const LEVELS = [0, 1, 2, 3]; // 0 はバラバラ
+const stars = (n) => (n ? '★'.repeat(n) + '☆'.repeat(3 - n) : 'バラバラ');
 
 // 生成中の処理がこの端末で動いているか（ホストが再読み込みすると false に戻る）
 let inflight = false;
@@ -18,7 +20,7 @@ function startGeneration(state, api) {
   inflight = true;
   const seq = state.genSeq;
   const genre = state.settings.custom.trim() || state.settings.genre;
-  makeQuestion(genre, state.used)
+  makeQuestion(genre, state.used, state.settings.level || 0)
     .then((q) => {
       if (state.phase !== 'generating' || state.genSeq !== seq) return;
       beginQuestion(state, api, q);
@@ -72,7 +74,7 @@ export default {
     setup() {
       return {
         phase: 'setup', // setup → generating → question → reveal → (setup | generating)
-        settings: { genre: 'おまかせ', custom: '', time: 90 },
+        settings: { genre: 'おまかせ', custom: '', time: 90, level: 0 },
         q: null,
         hintOf: {},
         answers: {},
@@ -96,6 +98,7 @@ export default {
           if (GENRES.includes(a.genre)) state.settings.genre = a.genre;
           if (typeof a.custom === 'string') state.settings.custom = a.custom.slice(0, 20);
           if (TIMES.includes(a.time)) state.settings.time = a.time;
+          if (LEVELS.includes(a.level)) state.settings.level = a.level;
           return true;
         case 'start':
           if (!isHost || (state.phase !== 'setup' && state.phase !== 'reveal')) return false;
@@ -158,7 +161,7 @@ export default {
       const v = { ...state, used: undefined };
       if (state.phase !== 'reveal') {
         // 答えと、みんなの入力内容は公開まで隠す
-        v.q = state.q && { genre: state.q.genre, source: state.q.source };
+        v.q = state.q && { genre: state.q.genre, level: state.q.level, source: state.q.source };
         v.answers = Object.fromEntries(Object.keys(state.answers).map((id) => [id, true]));
       }
       return v;
@@ -194,6 +197,7 @@ export default {
         const k = b.dataset.kk;
         if (k === 'genre') ctx.send({ type: 'settings', genre: b.dataset.v, custom: '' });
         else if (k === 'time') ctx.send({ type: 'settings', time: Number(b.dataset.v) });
+        else if (k === 'level') ctx.send({ type: 'settings', level: Number(b.dataset.v) });
         else if (k === 'start') {
           const custom = root.querySelector('#kk-custom');
           if (custom) ctx.send({ type: 'settings', custom: custom.value });
@@ -231,7 +235,7 @@ export default {
           return `${stats(v)}
             <div class="card center">
               <h2>ホストが次の問題を準備中…</h2>
-              <p class="muted">ジャンル：${esc(s.custom || s.genre)} ／ 制限時間：${s.time ? `${s.time}秒` : 'なし'}</p>
+              <p class="muted">ジャンル：${esc(s.custom || s.genre)} ／ むずかしさ：${stars(s.level || 0)} ／ 制限時間：${s.time ? `${s.time}秒` : 'なし'}</p>
             </div>
             ${rules()}`;
         }
@@ -250,6 +254,12 @@ export default {
             ${BUILTIN_ERRORS.length ? `<div class="banner err">問題ファイルの読み込みで問題があります: ${esc(BUILTIN_ERRORS[0])}</div>` : ''}
           </div>
           <div class="card">
+            <h2>むずかしさ</h2>
+            <div class="pills">${LEVELS.map(
+              (l) => `<button class="pill ${(s.level || 0) === l ? 'on' : ''}" data-kk="level" data-v="${l}">${stars(l)}</button>`,
+            ).join('')}</div>
+          </div>
+          <div class="card">
             <h2>制限時間</h2>
             <div class="pills">${TIMES.map(
               (t) => `<button class="pill ${s.time === t ? 'on' : ''}" data-kk="time" data-v="${t}">${t ? `${t}秒` : 'なし'}</button>`,
@@ -262,7 +272,7 @@ export default {
       function rules() {
         return `<details class="card"><summary>遊び方</summary>
           <ol class="rules">
-            <li>1人に1つずつ、答えにつながるヒント（かけら）が配られます。</li>
+            <li>1人に1つずつ、答えから連想する言葉（かけら）が配られます。</li>
             <li>自分のかけらを声に出してみんなに伝え、答えを相談します。</li>
             <li>全員が自分のスマホで答えを入力して送ります。</li>
             <li>全員の答えが正解ならクリア！ 1人でも違えば失敗です。</li>
@@ -278,7 +288,7 @@ export default {
         const waiting = ctx.players.filter((p) => p.online && !v.answers[p.id]);
         return `${stats(v)}
           ${v.deadline ? '<div class="bar"><i id="kk-bar" style="width:100%"></i></div>' : ''}
-          <div class="topbar"><span class="cat">ジャンル：${esc(v.q?.genre || '')}</span><span id="kk-timer" class="timer"></span></div>
+          <div class="topbar"><span class="cat">${esc(v.q?.genre || '')}${v.q?.level ? ` <span class="stars">${stars(v.q.level)}</span>` : ''}</span><span id="kk-timer" class="timer"></span></div>
           <div class="card">
             <h2>あなたのかけら</h2>
             ${mine ? `<div class="hint big-hint">${esc(mine)}</div>` : '<p class="muted">途中参加のため、今回はかけらがありません。みんなの話を聞いて答えよう。</p>'}
