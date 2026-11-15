@@ -3,6 +3,6 @@
 // anon キーはブラウザに公開される前提のキーなので、ここに書いて公開しても問題ない。
 // 空のままだと「ローカルモード」になり、同じブラウザのタブ同士でしか遊べない（動作確認用）。
 window.HUB_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://rihfgxrazltrtejlceau.supabase.co',
+  supabaseAnonKey: 'sb_publishable_LJts15c6oTFRTthNBR78RA_sQn_1P9g',
 };
